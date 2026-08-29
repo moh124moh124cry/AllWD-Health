@@ -27,7 +27,6 @@
             </div>
         </div>
 
-        <!-- بيانات المريض الأساسية -->
         <div class="grid grid-cols-2 gap-4 mb-6 bg-blue-50/50 p-4 rounded-xl border border-blue-100">
             <div>
                 <label class="block text-sm font-bold text-gray-700 mb-1">عمر المريض (سنة)</label>
@@ -42,48 +41,37 @@
             </div>
         </div>
 
-        <!-- أزرار اختيار طريقة الإدخال -->
         <div class="flex gap-2 mb-4">
             <button onclick="switchTab('image')" id="tabImage" class="flex-1 py-2.5 rounded-lg font-bold border tab-active transition">مسح صورة التحليل</button>
             <button onclick="switchTab('text')" id="tabText" class="flex-1 py-2.5 rounded-lg font-bold border tab-inactive transition">إدخال القيم يدوياً</button>
         </div>
 
-        <!-- قسم رفع الصورة -->
         <div id="sectionImage" class="mb-6 border-2 border-dashed border-blue-300 bg-blue-50/30 rounded-2xl p-8 text-center hover:bg-blue-50 transition-colors cursor-pointer" onclick="document.getElementById('reportImage').click()">
             <input type="file" id="reportImage" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
             <svg class="w-12 h-12 mx-auto text-blue-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
             <p id="uploadText" class="text-base font-bold text-blue-900">اضغط لرفع صورة التقرير الطبي</p>
         </div>
 
-        <!-- قسم الإدخال اليدوي -->
         <div id="sectionText" class="mb-6 hidden">
-            <textarea id="manualInput" rows="4" class="w-full border-gray-300 rounded-xl p-4 border focus:ring-blue-500 focus:border-blue-500 bg-gray-50" placeholder="اكتب نتائج التحليل هنا بحرية... &#10;مثال: الهيموجلوبين 14.5، السكر 95، WBC 6.2"></textarea>
+            <textarea id="manualInput" rows="4" class="w-full border-gray-300 rounded-xl p-4 border focus:ring-blue-500 focus:border-blue-500 bg-gray-50" placeholder="اكتب نتائج التحليل هنا... &#10;مثال: سكر 1.9، كوليسترول 1.8"></textarea>
             <button onclick="handleManualSubmit()" class="w-full mt-3 bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 rounded-lg transition shadow">تحليل القيم المكتوبة</button>
         </div>
 
-        <!-- نافذة التحميل -->
         <div id="loadingIndicator" class="hidden flex flex-col items-center justify-center py-8">
             <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mb-4"></div>
-            <p class="text-gray-600 font-medium text-center">جاري تقييم النتائج بناءً على العمر والجنس...<br><span class="text-sm text-gray-400">المرجع: Larousse Médical</span></p>
+            <p class="text-gray-600 font-medium text-center">جاري تقييم النتائج...<br><span class="text-sm text-gray-400">المرجع: Larousse Médical</span></p>
         </div>
 
-        <!-- قسم النتائج -->
         <div id="reportSection" class="mt-8 hidden">
             <h2 class="text-xl font-bold text-gray-800 border-b pb-3 mb-5 flex justify-between items-center">
                 <span>التقرير الطبي المفصل</span>
                 <span id="patientSummary" class="text-sm font-normal bg-blue-100 text-blue-800 px-3 py-1 rounded-full"></span>
             </h2>
             <div id="results" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-            
-            <div class="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded-xl text-sm text-yellow-800 flex gap-3">
-                <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                <p><strong>تنبيه طبي:</strong> القراءات تعتمد على موسوعة (Larousse). المعدلات الطبيعية قد تختلف قليلاً حسب المختبر وتاريخ المرض، يرجى عرضها على طبيبك.</p>
-            </div>
         </div>
     </div>
 
     <script>
-        // التبديل بين رفع الصورة والكتابة
         function switchTab(tab) {
             const tabImage = document.getElementById('tabImage');
             const tabText = document.getElementById('tabText');
@@ -156,15 +144,19 @@
                     body: JSON.stringify(payload)
                 });
 
-                if (!response.ok) throw new Error('فشل الخادم');
-                const analysisData = await response.json();
-                if(analysisData.error) throw new Error(analysisData.error);
+                const data = await response.json();
+
+                // عرض الخطأ الفعلي القادم من الخادم
+                if (!response.ok || data.error) {
+                    throw new Error(data.error || 'فشل الاتصال بالخادم.');
+                }
                 
-                renderResults(analysisData, payload.age, payload.gender);
+                renderResults(data, payload.age, payload.gender);
 
             } catch (error) {
                 console.error(error);
-                alert("حدث خطأ أثناء التحليل. يرجى المحاولة مجدداً.");
+                // التنبيه الآن سيعرض السبب الحقيقي بدلاً من "حدث خطأ"
+                alert("سبب الخطأ: " + error.message);
                 document.getElementById('loadingIndicator').classList.add('hidden');
             }
         }
@@ -184,16 +176,16 @@
                 const cardHTML = `
                     <div class="p-4 border rounded-xl ${colorClass} flex flex-col justify-between shadow-sm">
                         <div class="flex justify-between items-start mb-2 border-b border-white/40 pb-2">
-                            <span class="font-bold text-lg">${item.name}</span>
-                            <span class="font-bold border px-2 py-1 rounded bg-white shadow-sm" dir="ltr">${item.value} ${item.unit || ''}</span>
+                            <span class="font-bold text-lg">${item.name || 'غير معروف'}</span>
+                            <span class="font-bold border px-2 py-1 rounded bg-white shadow-sm" dir="ltr">${item.value || ''} ${item.unit || ''}</span>
                         </div>
                         <div class="text-sm mt-1 leading-relaxed">
                             <div class="flex items-center gap-1 mb-1">
                                 <strong>الحالة:</strong> 
-                                <span class="font-semibold bg-white/50 px-2 py-0.5 rounded text-xs">${item.status}</span>
+                                <span class="font-semibold bg-white/50 px-2 py-0.5 rounded text-xs">${item.status || 'غير محدد'}</span>
                             </div>
-                            <p class="opacity-95 mb-2">${item.explanation}</p>
-                            <div class="text-xs opacity-75 bg-white/40 inline-block px-2 py-1 rounded" dir="ltr">Range: ${item.range}</div>
+                            <p class="opacity-95 mb-2">${item.explanation || 'لا يوجد تفسير'}</p>
+                            <div class="text-xs opacity-75 bg-white/40 inline-block px-2 py-1 rounded" dir="ltr">Range: ${item.range || 'N/A'}</div>
                         </div>
                     </div>
                 `;
