@@ -1,32 +1,28 @@
 export default async function handler(req, res) {
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method Not Allowed' });
-    }
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
     const { imageBase64, mimeType, manualText, age, gender } = req.body;
     const apiKey = process.env.GEMINI_API_KEY; 
 
-    if (!apiKey) {
-        return res.status(500).json({ error: 'مفتاح API غير موجود في إعدادات Vercel لهذا المشروع.' });
-    }
+    if (!apiKey) return res.status(500).json({ error: 'مفتاح API غير موجود في إعدادات Vercel.' });
 
     const patientGender = gender === 'male' ? 'ذكر' : 'أنثى';
     const patientAge = age ? age : 'غير محدد';
 
     const promptText = `
-    أنت طبيب مختبرات تعتمد حصرياً على القيم المرجعية من "Larousse Médical".
-    بيانات المريض: الجنس (${patientGender})، العمر (${patientAge} سنة).
-    
-    المطلوب تحليل: ${imageBase64 ? 'صورة التقرير المرفقة.' : 'هذه النتائج: ' + manualText}
-    
-    استخرج جميع التحاليل وقيمها، وقم بإرجاع النتيجة حصراً بصيغة JSON Array. يجب أن يحتوي كل عنصر على:
+    أنت طبيب مختبرات تعتمد على "Larousse Médical". المريض: ${patientGender}، العمر: ${patientAge} سنة.
+    المطلوب تحليل: ${imageBase64 ? 'صورة التقرير المرفقة.' : 'النتائج المكتوبة: ' + manualText}
+    استخرج التحاليل وقم بإرجاعها كمصفوفة (Array) تحتوي على كائنات بالخصائص التالية فقط:
     "name", "value", "unit", "range", "status", "explanation".
-    حالة النتيجة (status) يجب أن تكون فقط: "طبيعي"، "مرتفع"، "منخفض"، "غير طبيعي".
-    مهم جداً: أرجع مصفوفة JSON فقط تبدأ بـ [ وتنتهي بـ ] بدون أي كلمات أخرى.
+    حالة النتيجة (status) يجب أن تكون فقط: "طبيعي"، "مرتفع"، "منخفض"، أو "غير طبيعي".
     `;
 
     try {
-        let requestBody = { contents: [{ parts: [{ text: promptText }] }] };
+        let requestBody = { 
+            contents: [{ parts: [{ text: promptText }] }],
+            // هذه الأسطر تجبر Gemini على عدم ارتكاب أي خطأ في التنسيق
+            generationConfig: { response_mime_type: "application/json" }
+        };
 
         if (imageBase64) {
             requestBody.contents[0].parts.push({
@@ -42,23 +38,20 @@ export default async function handler(req, res) {
 
         const data = await response.json();
         
-        if (data.error) {
-            return res.status(500).json({ error: 'خطأ من جوجل: ' + data.error.message });
+        if (data.error) return res.status(500).json({ error: 'خطأ من جوجل: ' + data.error.message });
+
+        // بما أننا أجبرناه على JSON، يمكننا تحويل النص مباشرة بأمان
+        let extractedValues = JSON.parse(data.candidates[0].content.parts[0].text);
+        
+        // التأكد من أنها مصفوفة
+        if (!Array.isArray(extractedValues)) {
+            extractedValues = [extractedValues];
         }
 
-        let textResponse = data.candidates[0].content.parts[0].text;
-        
-        // نظام فلترة ذكي لالتقاط الـ JSON فقط حتى لو أخطأ الذكاء الاصطناعي في التنسيق
-        const match = textResponse.match(/\[([\s\S]*?)\]/);
-        if (!match) {
-            return res.status(500).json({ error: 'الذكاء الاصطناعي لم يرسل البيانات بالتنسيق المطلوب.' });
-        }
-        
-        const extractedValues = JSON.parse("[" + match[1] + "]");
         res.status(200).json(extractedValues);
 
     } catch (error) {
         console.error("Server Error:", error);
-        res.status(500).json({ error: 'تأكد من كتابة التحاليل بشكل واضح والمحاولة مجدداً.' });
+        res.status(500).json({ error: 'حدث خطأ في معالجة البيانات، حاول كتابتها بشكل أوضح.' });
     }
 }
