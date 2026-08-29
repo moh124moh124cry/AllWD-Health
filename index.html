@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>قارئ تحاليل الدم الذكي | Larousse Médical</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
+        body { font-family: 'Tajawal', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-4 md:p-8">
+
+    <div class="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-6">
+        <div class="flex items-center gap-4 border-b pb-4 mb-6">
+            <div class="bg-blue-600 text-white p-3 rounded-lg shadow">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">قراءة التحاليل الذكية</h1>
+                <p class="text-sm text-gray-500">مدعوم بالذكاء الاصطناعي والمراجع الطبية</p>
+            </div>
+        </div>
+
+        <!-- رفع صورة التقرير -->
+        <div class="mb-6 border-2 border-dashed border-blue-300 bg-blue-50 rounded-xl p-6 text-center hover:bg-blue-100 transition cursor-pointer" onclick="document.getElementById('reportImage').click()">
+            <input type="file" id="reportImage" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
+            <svg class="w-12 h-12 mx-auto text-blue-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            <p id="uploadText" class="text-sm font-bold text-blue-800">اضغط لرفع صورة التحليل لاستخراج الأرقام تلقائياً</p>
+            <p class="text-xs text-blue-600 mt-1">آمن وخاص - لا يتم حفظ الصور</p>
+        </div>
+
+        <form id="bloodTestForm" class="space-y-5">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">الجنس (مهم لتحديد النسبة الطبيعية)</label>
+                <select id="gender" class="w-full border-gray-300 rounded-lg p-2.5 border focus:ring-blue-500 focus:border-blue-500">
+                    <option value="male">ذكر</option>
+                    <option value="female">أنثى</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">الهيموجلوبين (Hb) - g/dL</label>
+                    <input type="number" step="0.1" id="hb" class="w-full border-gray-300 rounded-lg p-2.5 border" required placeholder="مثال: 14.5">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">كريات الدم البيضاء (WBC) - x10³/µL</label>
+                    <input type="number" step="0.1" id="wbc" class="w-full border-gray-300 rounded-lg p-2.5 border" required placeholder="مثال: 7.2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">الصفائح الدموية (PLT) - x10³/µL</label>
+                    <input type="number" id="plt" class="w-full border-gray-300 rounded-lg p-2.5 border" required placeholder="مثال: 250">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">سكر الدم الصائم (FBS) - mg/dL</label>
+                    <input type="number" id="glucose" class="w-full border-gray-300 rounded-lg p-2.5 border" required placeholder="مثال: 90">
+                </div>
+            </div>
+
+            <button type="submit" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 rounded-lg transition duration-200 shadow">
+                إصدار التقرير الطبي
+            </button>
+        </form>
+
+        <div id="reportSection" class="mt-8 hidden">
+            <h2 class="text-xl font-bold text-gray-800 border-b pb-2 mb-4">التقرير الطبي المبسط</h2>
+            <div id="results" class="space-y-3"></div>
+            
+            <div class="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
+                <strong>تنبيه:</strong> هذه الأداة تعتمد على النسب المرجعية العامة (Larousse Médical) وهي مخصصة للأغراض التثقيفية فقط. لا تغني أبداً عن استشارة الطبيب المختص.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // دالة تصغير الصورة لتجنب حدود حجم Vercel
+        function compressImage(file, callback) {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = event => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const MAX_WIDTH = 1200;
+                    const MAX_HEIGHT = 1200;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height && width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    } else if (height > MAX_HEIGHT) {
+                        width *= MAX_HEIGHT / height;
+                        height = MAX_HEIGHT;
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+                    callback(compressedBase64);
+                };
+            };
+        }
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            document.getElementById('uploadText').innerText = `جاري تجهيز الصورة...`;
+            
+            compressImage(file, (base64Data) => {
+                extractValuesWithGemini(base64Data, 'image/jpeg');
+            });
+        }
+
+        async function extractValuesWithGemini(base64Data, mimeType) {
+            document.getElementById('uploadText').innerText = 'جاري تحليل الصورة بالذكاء الاصطناعي... الرجاء الانتظار';
+
+            try {
+                // الاتصال بملف Vercel Serverless Function
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        imageBase64: base64Data, 
+                        mimeType: mimeType 
+                    })
+                });
+
+                if (!response.ok) throw new Error('فشل الخادم في الرد');
+
+                const extractedValues = await response.json();
+
+                if(extractedValues.error) {
+                    throw new Error(extractedValues.error);
+                }
+
+                // تعبئة الحقول
+                if (extractedValues.hb) document.getElementById('hb').value = extractedValues.hb;
+                if (extractedValues.wbc) document.getElementById('wbc').value = extractedValues.wbc;
+                if (extractedValues.plt) document.getElementById('plt').value = extractedValues.plt;
+                if (extractedValues.glucose) document.getElementById('glucose').value = extractedValues.glucose;
+
+                document.getElementById('uploadText').innerText = 'تم استخراج البيانات بنجاح! يمكنك الآن إصدار التقرير.';
+            } catch (error) {
+                console.error(error);
+                document.getElementById('uploadText').innerText = 'تعذر استخراج البيانات، يرجى إدخالها يدوياً.';
+            }
+        }
+
+        document.getElementById('bloodTestForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const gender = document.getElementById('gender').value;
+            const hb = parseFloat(document.getElementById('hb').value);
+            const wbc = parseFloat(document.getElementById('wbc').value);
+            const plt = parseFloat(document.getElementById('plt').value);
+            const glucose = parseFloat(document.getElementById('glucose').value);
+
+            let resultsHTML = '';
+
+            function analyze(name, value, min, max, unit, lowMsg, highMsg) {
+                let status, color, msg;
+                if (value < min) {
+                    status = 'منخفض'; color = 'text-blue-600 bg-blue-50 border-blue-200'; msg = lowMsg;
+                } else if (value > max) {
+                    status = 'مرتفع'; color = 'text-red-600 bg-red-50 border-red-200'; msg = highMsg;
+                } else {
+                    status = 'طبيعي'; color = 'text-green-600 bg-green-50 border-green-200'; msg = 'القيمة ضمن المعدل الطبيعي.';
+                }
+
+                return `
+                    <div class="p-4 border rounded-lg ${color}">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="font-bold">${name}</span>
+                            <span class="font-bold border px-2 py-1 rounded bg-white">${value} ${unit}</span>
+                        </div>
+                        <div class="text-sm mt-2">
+                            <strong>الحالة:</strong> ${status} <br>
+                            <span class="opacity-90">${msg}</span>
+                            <div class="text-xs mt-1 opacity-75">المعدل الطبيعي: ${min} - ${max}</div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            const hbMin = gender === 'male' ? 13.5 : 12.0;
+            const hbMax = gender === 'male' ? 17.5 : 15.5;
+
+            resultsHTML += analyze('الهيموجلوبين (Hb)', hb, hbMin, hbMax, 'g/dL', 'قد يشير إلى فقر الدم (الأنيميا)، ينصح بمراجعة الطبيب.', 'ارتفاع في خضاب الدم، قد يكون بسبب التدخين، الجفاف، أو أسباب أخرى.');
+            resultsHTML += analyze('كريات الدم البيضاء (WBC)', wbc, 4.5, 11.0, 'x10³/µL', 'نقص في المناعة أو التهاب فيروسي.', 'قد يشير إلى وجود عدوى بكتيرية أو التهاب نشط في الجسم.');
+            resultsHTML += analyze('الصفائح الدموية (PLT)', plt, 150, 450, 'x10³/µL', 'نقص قد يعرضك لسهولة النزيف أو الكدمات.', 'زيادة قد تؤدي إلى خطر التخثر.');
+            resultsHTML += analyze('سكر الدم الصائم (FBS)', glucose, 70, 100, 'mg/dL', 'هبوط في سكر الدم، قد يسبب الدوخة والتعب.', 'مؤشر على مقدمات السكري أو السكري (إذا تجاوز 126)، يرجى مراجعة الطبيب.');
+
+            document.getElementById('results').innerHTML = resultsHTML;
+            document.getElementById('reportSection').classList.remove('hidden');
+        });
+    </script>
+</body>
+</html>
