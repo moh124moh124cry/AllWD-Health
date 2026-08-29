@@ -20,7 +20,6 @@ export default async function handler(req, res) {
     try {
         let requestBody = { 
             contents: [{ parts: [{ text: promptText }] }],
-            // هذه الأسطر تجبر Gemini على عدم ارتكاب أي خطأ في التنسيق
             generationConfig: { response_mime_type: "application/json" }
         };
 
@@ -30,7 +29,8 @@ export default async function handler(req, res) {
             });
         }
 
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+        // تم التبديل إلى نموذج gemini-1.5-pro المتوافق مع حسابك والأكثر دقة للتحليل الطبي
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(requestBody)
@@ -40,10 +40,8 @@ export default async function handler(req, res) {
         
         if (data.error) return res.status(500).json({ error: 'خطأ من جوجل: ' + data.error.message });
 
-        // بما أننا أجبرناه على JSON، يمكننا تحويل النص مباشرة بأمان
         let extractedValues = JSON.parse(data.candidates[0].content.parts[0].text);
         
-        // التأكد من أنها مصفوفة
         if (!Array.isArray(extractedValues)) {
             extractedValues = [extractedValues];
         }
