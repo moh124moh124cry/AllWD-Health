@@ -29,8 +29,8 @@ export default async function handler(req, res) {
             });
         }
 
-        // تم التبديل إلى نموذج gemini-1.5-pro المتوافق مع حسابك والأكثر دقة للتحليل الطبي
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`, {
+        // التعديل هنا: إضافة -latest لاسم النموذج في الرابط
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(requestBody)
